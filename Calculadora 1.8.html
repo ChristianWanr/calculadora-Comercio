@@ -1,0 +1,220 @@
+<html>
+<!-- Calculadora de Trading con redondeo exacto de acciones -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calculadora de Trading</title>
+  <style>
+    body {
+      background-color: #0e1117;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 40px;
+      background-color: #161b22;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.05);
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .logo img {
+      width: 60px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 40px;
+      color: #fff;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      color: #ccc;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      background: #0e1117;
+      border: 1px solid #333;
+      border-radius: 6px;
+      margin-top: 5px;
+      color: #fff;
+    }
+    table {
+      width: 100%;
+      margin-top: 30px;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #333;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #222;
+      color: #fff;
+    }
+    .positive {
+      color: #00ff88;
+    }
+    .negative {
+      color: #ff5555;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #e63946;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Flat_red_W.svg/2048px-Flat_red_W.svg.png" alt="Logo" />
+    </div>
+    <h1>Calculadora de Trading</h1>
+
+    <label for="precio">Precio de Compra</label>
+    <input type="number" id="precio" step="0.01">
+
+    <label for="inversion">Inversión Total</label>
+    <input type="number" id="inversion" step="0.01">
+
+    <button onclick="calcular()">Calcular Ventas</button>
+
+<h3>Resumen de la Compra</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Operación</th>
+      <th>Acciones</th>
+      <th>Precio</th>
+      <th>Inversión</th>
+      <th>Retorno</th>
+      <th>Dif. Gain</th>
+      <th>Gain %</th>
+    </tr>
+  </thead>
+  <tbody id="resumenCompra"></tbody>
+</table>
+
+<h3>Simulaciones de Ventas</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Operación</th>
+          <th>Acciones</th>
+          <th>Precio Obj.</th>
+          <th>Cambio</th>
+          <th>Valor Dif.</th>
+          <th>Retorno</th>
+          <th>Ganancia</th>
+          <th>Gain %</th>
+        </tr>
+      </thead>
+      <tbody id="tablaResultados"></tbody>
+    </table>
+  </div>
+
+  <script>
+    function calcular() {
+  const precio = parseFloat(document.getElementById('precio').value);
+  const inversion = parseFloat(document.getElementById('inversion').value);
+
+  if (isNaN(precio) || isNaN(inversion) || precio <= 0 || inversion <= 0) {
+    alert("Por favor, completa los datos correctamente.");
+    return;
+  }
+
+  const totalAcciones = Math.floor(inversion / precio);
+  const accionesVenta1 = Math.round(totalAcciones * 0.30);
+  const accionesVenta2 = Math.round(totalAcciones * 0.30);
+  const accionesVenta3 = totalAcciones - accionesVenta1 - accionesVenta2;
+
+  const escenarios = [
+    { nombre: "Venta 1", cambio: 0.13, acciones: accionesVenta1 },
+    { nombre: "Venta 2", cambio: 0.23, acciones: accionesVenta2 },
+    { nombre: "Venta 3", cambio: 0.33, acciones: accionesVenta3 },
+    { nombre: "Venta de Emergencia", cambio: -0.08, acciones: totalAcciones }
+  ];
+
+  const cuerpo = document.getElementById("tablaResultados");
+  const resumen = document.getElementById("resumenCompra");
+  cuerpo.innerHTML = "";
+  resumen.innerHTML = "";
+
+  // Mostramos resumen de compra 
+    // ---- Cálculo basado en las tres primeras ventas ----
+  let totalRetorno = 0;
+
+  // Cálculo de ventas (y suma para el resumen)
+  escenarios.forEach((escenario, index) => {
+    const precioVenta = precio * (1 + escenario.cambio);
+    const valorDif = precioVenta - precio;
+    const retorno = precioVenta * escenario.acciones;
+    const inversionParcial = precio * escenario.acciones;
+    const ganancia = retorno - inversionParcial;
+    const gainPorcentaje = (ganancia / inversion) * 100; // en proporción a toda la inversión
+
+    // Solo sumar las 3 primeras ventas
+    if (index < 3) {
+      totalRetorno += retorno;
+    }
+  });
+
+  // ---- Resumen de compra basado en las 3 ventas ----
+  const gananciaCompra = totalRetorno - inversion;
+  const gainCompraPorcentaje = (gananciaCompra / inversion) * 100;
+
+  const filaResumen = document.createElement("tr");
+  filaResumen.innerHTML = `
+    <td>Compra</td>
+    <td>${totalAcciones}</td>
+    <td>$${precio.toFixed(2)}</td>
+    <td>$${inversion.toFixed(2)}</td>
+    <td>$${totalRetorno.toFixed(2)}</td>
+    <td>$${gananciaCompra.toFixed(2)}</td>
+    <td>${gainCompraPorcentaje.toFixed(2)}%</td>
+  `;
+  resumen.appendChild(filaResumen);
+
+  // Ventas
+  escenarios.forEach(escenario => {
+    const precioVenta = precio * (1 + escenario.cambio);
+    const valorDif = precioVenta - precio;
+    const retorno = precioVenta * escenario.acciones;
+    const inversionParcial = precio * escenario.acciones;
+    const ganancia = retorno - inversionParcial;
+    const gainPorcentaje = (ganancia / inversion) * 100; // ← usando toda la inversión
+
+    const fila = document.createElement("tr");
+    fila.innerHTML = `
+      <td>${escenario.nombre}</td>
+      <td>${escenario.acciones}</td>
+      <td>$${precioVenta.toFixed(2)}</td>
+      <td class="${escenario.cambio >= 0 ? 'positive' : 'negative'}">${(escenario.cambio * 100).toFixed(0)}%</td>
+      <td class="${valorDif >= 0 ? 'positive' : 'negative'}">$${valorDif.toFixed(2)}</td>
+      <td>$${retorno.toFixed(2)}</td>
+      <td class="${ganancia >= 0 ? 'positive' : 'negative'}">$${ganancia.toFixed(2)}</td>
+      <td class="${gainPorcentaje >= 0 ? 'positive' : 'negative'}">${gainPorcentaje.toFixed(2)}%</td>
+    `;
+    cuerpo.appendChild(fila);
+  });
+}
+  </script>
+</body>
+</html>
